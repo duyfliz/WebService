@@ -1,0 +1,60 @@
+package org.vgu.parse;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.vgu.sql.SQLColumn;
+import org.vgu.sql.SQLTable;
+
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.Statements;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.util.TablesNamesFinder;
+
+public class SQLParseTest {
+	
+	CCJSqlParserManager parserManager = new CCJSqlParserManager();
+	
+	public static void main(String[] args) throws JSQLParserException {
+		
+		SQLParseTest p = new SQLParseTest();
+		SQLTable t = new SQLTable();
+		t = p.create("CREATE TABLE user (userID int not null, age int not null, PRIMARY KEY (userID));");
+		String s = "";
+		for(int i=0; i<t.getColumns().size(); i++) {
+			s += t.getColumns().get(i).toSQLString();
+		}
+		System.out.println(t.getName()+ "\n" + s + "\n");
+	}
+	
+	public SQLTable create(String s) throws JSQLParserException {
+		CreateTable createTable = (CreateTable) parserManager.parse(new StringReader(s));
+		SQLTable table = new SQLTable();
+		List<SQLColumn> column = new ArrayList<SQLColumn>();
+		table.setName(createTable.getTable().getName());
+		
+		
+		
+		for(int i=0; i < createTable.getColumnDefinitions().size(); i++) {
+			String temp = "";
+			SQLColumn sqlColumn = new SQLColumn();
+			sqlColumn.setName(createTable.getColumnDefinitions().get(i).getColumnName());
+			sqlColumn.setType(createTable.getColumnDefinitions().get(i).getColDataType().getDataType());
+			for(int j=0; j<createTable.getColumnDefinitions().get(i).getColumnSpecStrings().size(); j++) {
+				temp += createTable.getColumnDefinitions().get(i).getColumnSpecStrings().get(j);
+			}
+			column.add(sqlColumn);
+		}
+		
+		table.setColumns(column);
+		return table;
+	}
+}

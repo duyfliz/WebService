@@ -1,0 +1,94 @@
+package org.vgu.parse;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.vgu.sql.SQLColumn;
+import org.vgu.sql.SQLForeignKey;
+import org.vgu.sql.SQLTable;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.create.table.ForeignKeyIndex;
+import net.sf.jsqlparser.statement.create.table.Index;
+import net.sf.jsqlparser.statement.create.table.NamedConstraint;
+
+public class SQLParseTest {
+	
+	CCJSqlParserManager parserManager = new CCJSqlParserManager();
+	
+	public static void main(String[] args) throws JSQLParserException {
+		
+		SQLParseTest p = new SQLParseTest();
+		SQLTable t = new SQLTable();
+		t = p.create("CREATE TABLE user (userID int not null, age int not null, PRIMARY KEY (userID),"
+				+ "companyID int not null, FOREIGN KEY (companyID) REFERENCES company(companyID));");
+		String s = "";
+		for(int i=0; i<t.getColumns().size(); i++) {
+			s += t.getColumns().get(i).toSQLString() + " ";
+		}
+		String foreign = "";
+		for(int i=0; i<t.getForeignKeys().size(); i++) {
+			foreign += t.getForeignKeys().get(i).getName() + " " + t.getForeignKeys().get(i).getProperties() + "\n";
+		}
+		System.out.println(t.getName()+ "\n" + s + "\n"
+				+ t.getPrimaryKey().getName()+ " " + t.getPrimaryKey().getProperties()
+				+ foreign);
+	}
+	
+	public SQLTable create(String s) throws JSQLParserException {
+		CreateTable createTable = (CreateTable) parserManager.parse(new StringReader(s));
+		SQLTable table = new SQLTable();
+		List<SQLColumn> column = new ArrayList<SQLColumn>();
+		List<SQLForeignKey> listForeign = new ArrayList<SQLForeignKey>();
+		SQLColumn primaryKey = null;
+		table.setName(createTable.getTable().getName());
+		
+		
+		
+		for(int i=0; i < createTable.getColumnDefinitions().size(); i++) {
+			String temp = "";
+			SQLColumn sqlColumn = new SQLColumn();
+			sqlColumn.setName(createTable.getColumnDefinitions().get(i).getColumnName());
+			sqlColumn.setType(createTable.getColumnDefinitions().get(i).getColDataType().getDataType());
+			if(createTable.getColumnDefinitions().get(i).getColumnSpecStrings().isEmpty()) {
+				System.out.println("empty");
+			} else {
+				for(int j=0; j<createTable.getColumnDefinitions().get(i).getColumnSpecStrings().size(); j++) {
+					temp += (createTable.getColumnDefinitions().get(i).getColumnSpecStrings().get(j)) +" ";
+				}
+				sqlColumn.setProperties(temp);
+			}
+			sqlColumn.setProperties(temp);
+			column.add(sqlColumn);
+		}
+		
+		for(int i=0; i<createTable.getIndexes().size(); i++) {
+			if(createTable.getIndexes().get(i).getClass().getName().equals("net.sf.jsqlparser.statement.create.table.ForeignKeyIndex")) {
+				ForeignKeyIndex f = (ForeignKeyIndex) createTable.getIndexes().get(i);
+				SQLForeignKey foreign = new SQLForeignKey();
+				for(int j=0; j<f.getColumnsNames().size(); j++) {
+					foreign.setName(f.getColumnsNames().get(j));
+					foreign.setReferences(f.getReferencedColumnNames().get(j));
+				}
+				foreign.setRefTable(f.getTable().getName());
+				listForeign.add(foreign);
+			}
+			else if(createTable.getIndexes().get(i).getClass()
+					.getName().equals("net.sf.jsqlparser.statement.create.table.NamedConstraint")) {
+				primaryKey = new SQLColumn();
+				Index index = createTable.getIndexes().get(i);
+				for(int j=0; j<index.getColumnsNames().size(); j++) {
+					primaryKey.setName(index.getColumnsNames().get(j));
+					primaryKey.setProperties(index.getType());
+				}
+			}
+			
+		}
+		table.setPrimaryKey(primaryKey);
+		table.setForeignKeys(listForeign);
+		table.setColumns(column);
+		return table;
+	}
+}

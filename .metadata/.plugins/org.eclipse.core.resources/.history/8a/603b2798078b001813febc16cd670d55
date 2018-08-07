@@ -1,0 +1,11 @@
+package org.vgu.sql;
+
+public class SQLCreate implements SQLStatements {
+
+	@Override
+	public String accept(Visitor visitor) {
+		// TODO Auto-generated method stub
+		return visitor.visit(this);
+	}
+
+}

@@ -1,0 +1,462 @@
+//package org.vgu.uml;
+//
+//import java.lang.reflect.Array;
+//import java.util.ArrayList;
+//import java.util.Arrays;
+//import java.util.HashMap;
+//import java.util.List;
+//import java.util.Map;
+//
+//public class UMLContextExample {
+//
+//	public static void main(String[] args) {
+//		// TODO Auto-generated method stub
+//	   	  /* default context */
+//		
+//		/* Classes */
+//  		 UMLClass user = new UMLClass();
+//  		 user.setName("User");
+//  		 UMLClass vehicle = new UMLClass();
+//  		 vehicle.setName("Vehicle");
+//  		 UMLClass car = new UMLClass();
+//  		 car.setName("Car");
+//  		 UMLClass bike = new UMLClass();
+//  		 bike.setName("Bike");
+//  		 UMLClass company = new UMLClass();
+//  		 company.setName("Company");
+//  		 UMLClass city = new UMLClass();
+//  		 city.setName("City");
+//  		 
+//  		 
+//   		 /* Attributes */
+//   		 UMLAttribute age = new UMLAttribute();
+//   		 age.setSource(user);
+//   		 age.setName("age");
+//   		 age.setType("int(11)");
+//   		 age.setConstraint("NOT NULL");
+//   		 
+//   		 UMLAttribute userID = new UMLAttribute();
+//   		 userID.setSource(user);
+//   		 userID.setName("UserID");
+//   		 userID.setType("int(11)");
+//   		 userID.setConstraint("NOT NULL PRIMARY KEY");
+//   		 
+//   		 UMLAttribute plate = new UMLAttribute();
+//   		 plate.setSource(vehicle);
+//   		 plate.setName("plate");
+//   		 plate.setType("varchar(45)");
+//   		 
+//   		 UMLAttribute vehicleID = new UMLAttribute();
+//   		 vehicleID.setSource(vehicle);
+//   		 vehicleID.setName("VehicleID");
+//   		 vehicleID.setType("int(11)");
+//   		 
+//   		 /*List of Attributes*/
+//   		 List<UMLAttribute> userAttributes  = new ArrayList<UMLAttribute>();
+//   		 userAttributes.add(userID);
+//   		 userAttributes.add(age);
+//   		 
+//   		List<UMLAttribute> vehicleAttributes = new ArrayList<UMLAttribute>();
+//   		vehicleAttributes.add(vehicleID);
+//   		vehicleAttributes.add(plate);
+//   	
+//   		
+//  		 /* Associations ends */    
+//  		 UMLAssociationEnd vehiclesEnd = new UMLAssociationEnd();
+//  		 vehiclesEnd.setName("vehicles");
+//  		 vehiclesEnd.setSource(user);
+//  		 vehiclesEnd.setTarget(vehicle);
+//  		 
+//  		 UMLAssociationEnd ownerEnd = new UMLAssociationEnd();
+//  		 ownerEnd.setName("owner");
+//  		 ownerEnd.setSource(vehicle);
+//  		 ownerEnd.setTarget(user);
+//  		 
+//  		 
+//  		 UMLAssociationEnd mycompany = new UMLAssociationEnd();
+//  		 mycompany.setName("mycompany");
+//  		 mycompany.setSource(user);
+//  		 mycompany.setTarget(company);
+//		
+//  		 
+//   		 UMLAssociationEnd employees = new UMLAssociationEnd();
+//   		 employees.setName("employees");
+//   		 employees.setSource(company);
+//   		 employees.setTarget(user);
+//   		 
+//   		 
+//   		 /* Associations */
+//   		 UMLAssociation carsowner = new UMLAssociation();
+//   		 carsowner.setSource(vehiclesEnd);
+//   		 carsowner.setTarget(ownerEnd);
+//   		 
+//   		 UMLAssociation companiesemployees = new UMLAssociation();
+//   		 companiesemployees.setSource(mycompany);
+//   		 companiesemployees.setTarget(employees);
+//   		 //companiesemployees.setTarget(mycompany);
+//   		 //companiesemployees.setSource(employees);
+//   		 
+//   		 
+//   		 
+//   		 /* Multiplicities */
+//   		 UMLMultiplicity mcars = new UMLMultiplicity();
+//   		 mcars.setAssociationend(vehiclesEnd);
+//   		 mcars.setMultiplicity(Multiplicity.AtMostOne);
+//   		 
+//   		 UMLMultiplicity mowner = new UMLMultiplicity();
+//   		 mowner.setAssociationend(ownerEnd);
+//   		 mowner.setMultiplicity(Multiplicity.AtMostOne);
+//   		 
+//   		 UMLMultiplicity mcompanies = new UMLMultiplicity();
+//   		 mcompanies.setAssociationend(mycompany);
+//   		 mcompanies.setMultiplicity(Multiplicity.AtMostOne);
+//   		 
+//   		 UMLMultiplicity memployees = new UMLMultiplicity();
+//   		 memployees.setAssociationend(employees);
+//   		 memployees.setMultiplicity(Multiplicity.Multi);
+//   		 
+//	   	 Map<Integer, UMLContext> schema = new HashMap<Integer, UMLContext>();
+//	   	
+//	   	 schema.put(1, new UMLContext(user, userAttributes, vehiclesEnd, carsowner, mcars));
+//	   	 schema.put(2, new UMLContext(vehicle, vehicleAttributes, ownerEnd, carsowner, mowner));
+//	   	 
+//	   	 String columnAttribute = "";
+//	   	 
+//	   	 
+//	   	 for(Map.Entry<Integer, UMLContext> entry:schema.entrySet()) {
+//	   		 int key = entry.getKey();
+//	   		 UMLContext u = entry.getValue();
+//	   		 String rs = "";
+//	   		 rs += "Create " +
+//	   				 u.getClasses().getName() + " (\n"
+//	   				 + u.getAttributes() + ","
+////	   				 + u.getAssociationends().getName() + " "
+//	   				 ;
+//	   		 
+////	   				 + u.getMultiplicities().getName()
+////	   				 + ");";
+//	   		 if (u.getMultiplicities().getName() == "AtMostOne") {
+//	   			rs += u.getAssociationends().getTarget().getName()+ "ID UNIQUE REFERENCES " + u.getAssociationends().getTarget().getName() + "(" +
+//	   					u.getAssociationends().getTarget().getName() + "ID)\n";
+//	   		 }
+//	   		 
+//	   		 System.out.println(rs);
+//	   		/* System.out.println("Create table" +
+//	   				 u.getClasses().getName() + " (\n"
+//	   				 + u.getAttributes()
+////	   				 + u.getAssociationends().getName() + " "
+//	   				 + u.getMultiplicities().getName()
+//	   				 + ");");*/
+//	   	 }
+////	   		 
+////	   		 defaultContext.getClasses().add(user);
+////	   		 defaultContext.getClasses().add(car);
+////	   		 defaultContext.getClasses().add(company);
+////	   		 defaultContext.getClasses().add(city);
+////	   		 defaultContext.getClasses().add(vehicle);
+////	   		 defaultContext.getClasses().add(bike);
+////	   		 
+////	   		 /* Generalizations */
+////	   		 UMLGeneralization gen1 = new UMLGeneralization();
+////	   		 gen1.setSuperclass(vehicle);
+////	   		 gen1.setSubclass(car);
+////	   		 
+////	   		 UMLGeneralization gen2 = new UMLGeneralization();
+////	   		 gen2.setSuperclass(vehicle);
+////	   		 gen2.setSubclass(bike);
+////	   		 
+////	   		 defaultContext.getGeneralizations().add(gen1);
+////	   		 defaultContext.getGeneralizations().add(gen2);
+////	   		 
+//
+////	   		 
+////	   		 
+////	   		 defaultContext.getAttributes().add(age);
+////	   		 defaultContext.getAttributes().add(plate);
+////	   	 
+//
+//	   		 
+//	   		 
+//
+////	   		 
+////	   		 
+////	   			 
+////	   		 defaultContext.getAssociationends().add(vehicles);
+////	   		 defaultContext.getAssociationends().add(owner);
+////	   		 
+////	   		 defaultContext.getAssociationends().add(mycompany);
+////	   		 defaultContext.getAssociationends().add(employees);
+////	   		 
+//
+////	   		 
+////	   		 defaultContext.getAssociations().add(carsowner);
+////	   		 defaultContext.getAssociations().add(companiesemployees);
+////	   		 
+//
+////	   		 
+////	   		 
+////	   		 
+////	   		 defaultContext.getMultiplicities().add(memployees);
+////	   		 defaultContext.getMultiplicities().add(mcompanies);
+////	   		 defaultContext.getMultiplicities().add(mowner);
+////	   		 defaultContext.getMultiplicities().add(mcars);
+////
+////	   		 for(int i=0; i<defaultContext.getClasses().size(); i++) {
+////	   			 System.out.println("Create table " + defaultContext.getClasses().get(i).getName());
+////	   		 }
+//	}
+//
+//}
+
+package org.vgu.uml;
+
+import java.io.FileOutputStream;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.vgu.sql.SQLCreate;
+import org.vgu.sql.SQLJoin;
+import org.vgu.sql.SQLSelect;
+import org.vgu.sql.SQLTable;
+import org.vgu.sql.SQLVisitor;
+
+public class UMLContextExample {
+
+ public static void main(String[] args) {
+  // TODO Auto-generated method stub
+       // default context /
+	 
+	 UMLContext uml = new UMLContext();
+ // Classes /
+     UMLClass user = new UMLClass();
+     user.setName("user");
+     UMLClass vehicle = new UMLClass();
+     vehicle.setName("vehicle");
+     UMLClass car = new UMLClass();
+     car.setName("car");
+     UMLClass bike = new UMLClass();
+     bike.setName("bike");
+     UMLClass company = new UMLClass();
+     company.setName("company");
+     UMLClass city = new UMLClass();
+     city.setName("city");
+     
+     
+      // Attributes /
+      UMLAttribute age = new UMLAttribute();
+      age.setSource(user);
+      age.setName("age");
+      age.setType("int");
+      
+      UMLAttribute plate = new UMLAttribute();
+      plate.setSource(vehicle);
+      plate.setName("plate");
+      plate.setType("Varchar(255)");
+         
+      
+      UMLAttribute comName = new UMLAttribute();
+      comName.setSource(company);
+      comName.setName("comName");
+      comName.setType("Varchar(255)");
+      
+      /*List of Attributes*/
+      List<UMLAttribute> userAttributes  = new ArrayList<UMLAttribute>();
+      userAttributes.add(age);
+      
+     List<UMLAttribute> vehicleAttributes = new ArrayList<UMLAttribute>();
+     vehicleAttributes.add(plate);
+//     vehicleAttributes.add(uvID);
+     
+     List<UMLAttribute> comAttributes = new ArrayList<UMLAttribute>();
+     comAttributes.add(comName);
+     
+     /* Associations ends */    
+     UMLAssociationEnd vehiclesEnd = new UMLAssociationEnd();
+     vehiclesEnd.setName("vehiclesEnd");
+     vehiclesEnd.setSource(user);
+     vehiclesEnd.setTarget(vehicle);
+     
+     UMLAssociationEnd ownerEnd = new UMLAssociationEnd();
+     ownerEnd.setName("ownerEnd");
+     ownerEnd.setSource(vehicle);
+     ownerEnd.setTarget(user);
+     
+     
+     UMLAssociationEnd comEnd = new UMLAssociationEnd();
+     comEnd.setName("comEnd");
+     comEnd.setSource(user);
+     comEnd.setTarget(company);
+  
+     
+      UMLAssociationEnd employees = new UMLAssociationEnd();
+      employees.setName("employees");
+      employees.setSource(company);
+      employees.setTarget(user);
+      
+      /*List of Association end*/
+      List<UMLAssociationEnd> listOfEnds = new ArrayList<UMLAssociationEnd>();
+      listOfEnds.add(vehiclesEnd);
+      listOfEnds.add(ownerEnd);
+      listOfEnds.add(comEnd);
+      listOfEnds.add(employees);
+      
+      /* Associations */
+      UMLAssociation carsowner = new UMLAssociation();
+      carsowner.setSource(vehiclesEnd);
+      carsowner.setTarget(ownerEnd);
+      
+      UMLAssociation companiesemployees = new UMLAssociation();
+      companiesemployees.setSource(comEnd);
+      companiesemployees.setTarget(employees);
+      
+      /*List of Association*/
+      ArrayList<UMLAssociation> listOA1 = new ArrayList<UMLAssociation>();
+      listOA1.add(carsowner);
+      listOA1.add(companiesemployees);
+      
+      ArrayList<UMLAssociation> listOA2 = new ArrayList<UMLAssociation>();
+      listOA2.add(carsowner);
+      
+      ArrayList<UMLAssociation> listOA3 = new ArrayList<UMLAssociation>();
+      listOA3.add(companiesemployees);
+      
+      /* Multiplicities */
+      UMLMultiplicity mcars = new UMLMultiplicity();
+      mcars.setAssociationend(vehiclesEnd);
+      mcars.setMultiplicity(Multiplicity.Multi);
+      
+      UMLMultiplicity mowner = new UMLMultiplicity();
+      mowner.setAssociationend(ownerEnd);
+      mowner.setMultiplicity(Multiplicity.AtMostOne);
+      
+      UMLMultiplicity mcompanies = new UMLMultiplicity();
+      mcompanies.setAssociationend(comEnd);
+      mcompanies.setMultiplicity(Multiplicity.Multi);
+      
+      UMLMultiplicity memployees = new UMLMultiplicity();
+      memployees.setAssociationend(employees);
+      memployees.setMultiplicity(Multiplicity.Multi);
+      
+      
+      /*List of multiplicity*/
+     List<UMLMultiplicity> mul1 = new ArrayList<UMLMultiplicity>();
+     mul1.add(mcars);
+     mul1.add(mowner);
+     mul1.add(mcompanies);
+     mul1.add(memployees);
+      
+      Map<Integer, UMLContext> schema = new HashMap<Integer, UMLContext>();
+     
+      schema.put(1, new UMLContext(user, userAttributes, listOfEnds, listOA1, mul1));
+      schema.put(2, new UMLContext(vehicle, vehicleAttributes, listOfEnds, listOA2, mul1));
+      schema.put(3, new UMLContext(company, comAttributes, listOfEnds, listOA3, mul1));
+      
+      String str = "";
+      
+      SQLCreate create = new SQLCreate();
+      
+      SQLVisitor sqlVisitor = new SQLVisitor();
+      create.setUMLContext(schema.get(1));
+      System.out.println(create.accept(sqlVisitor));
+      create.setUMLContext(schema.get(2));
+      System.out.println(create.accept(sqlVisitor));
+      create.setUMLContext(schema.get(3));
+      System.out.println(create.accept(sqlVisitor));
+      
+      SQLSelect select = new SQLSelect();
+      select.setUMLContext(schema.get(1));
+      System.out.println(select.accept(sqlVisitor));
+      select.setUMLContext(schema.get(2));
+      System.out.println(select.accept(sqlVisitor));
+      select.setUMLContext(schema.get(3));
+      System.out.println(select.accept(sqlVisitor));
+
+      SQLJoin join = new SQLJoin();
+      join.setSchema(schema);
+      System.out.println(join.accept(sqlVisitor));
+//      for(Map.Entry<Integer, UMLContext> entry:schema.entrySet()) {
+//       int key = entry.getKey();
+//       UMLContext u = entry.getValue();
+//       str += "Create table " +
+//         u.getClasses().getName() + " (\n"
+//         + u.getAttributes()
+//         + u.conPrimary()
+//         + u.conForeign(u)
+//         + "\n);\n\n";
+//      }
+//      writeOutput(str);
+//       
+//       defaultContext.getClasses().add(user);
+//       defaultContext.getClasses().add(car);
+//       defaultContext.getClasses().add(company);
+//       defaultContext.getClasses().add(city);
+//       defaultContext.getClasses().add(vehicle);
+//       defaultContext.getClasses().add(bike);
+//       
+//       / Generalizations /
+//       UMLGeneralization gen1 = new UMLGeneralization();
+//       gen1.setSuperclass(vehicle);
+//       gen1.setSubclass(car);
+//       
+//       UMLGeneralization gen2 = new UMLGeneralization();
+//       gen2.setSuperclass(vehicle);
+//       gen2.setSubclass(bike);
+//       
+//       defaultContext.getGeneralizations().add(gen1);
+//       defaultContext.getGeneralizations().add(gen2);
+//       
+
+//       
+//       
+//       defaultContext.getAttributes().add(age);
+//       defaultContext.getAttributes().add(plate);
+//      
+
+       
+       
+
+//       
+//       
+//        
+//       defaultContext.getAssociationends().add(vehicles);
+//       defaultContext.getAssociationends().add(owner);
+//       
+//       defaultContext.getAssociationends().add(mycompany);
+//       defaultContext.getAssociationends().add(employees);
+//       
+
+//       
+//       defaultContext.getAssociations().add(carsowner);
+//       defaultContext.getAssociations().add(companiesemployees);
+//       
+
+//       
+//       
+//       
+//       defaultContext.getMultiplicities().add(memployees);
+//       defaultContext.getMultiplicities().add(mcompanies);
+//       defaultContext.getMultiplicities().add(mowner);
+//       defaultContext.getMultiplicities().add(mcars);
+//
+//       for(int i=0; i<defaultContext.getClasses().size(); i++) {
+//        System.out.println("Create table " + defaultContext.getClasses().get(i).getName());
+//       }
+ }
+
+
+	
+	public static void writeOutput(String str) {
+		try{    
+            FileOutputStream fout=new FileOutputStream("E:\\testout.txt");     
+            byte b[]=str.getBytes();//converting string into byte array    
+            fout.write(b);    
+            fout.close();    
+            System.out.println("success...");    
+           }catch(Exception e){System.out.println(e);}    
+	}
+}
+

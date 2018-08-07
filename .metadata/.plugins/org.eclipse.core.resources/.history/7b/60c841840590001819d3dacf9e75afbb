@@ -1,0 +1,59 @@
+package org.vgu.parse;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.vgu.sql.SQLColumn;
+import org.vgu.sql.SQLTable;
+
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.Statements;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.util.TablesNamesFinder;
+
+public class SQLParseTest {
+	
+	CCJSqlParserManager parserManager = new CCJSqlParserManager();
+	
+	public static void main(String[] args) throws JSQLParserException {
+		
+		SQLParseTest p = new SQLParseTest();
+		SQLTable t = p.create("Create table user (\r\n" + 
+				"userID int NOT NULL,\r\n" + 
+				"age int NOT NULL,\r\n" + 
+				"PRIMARY KEY (userID),\r\n" + 
+				"companyID int,\r\n" + 
+				"FOREIGN KEY (companyID) REFERENCES company(companyID)\r\n" + 
+				");\r\n" + 
+				"");
+		System.out.println(t.getName()+ "\n" + t.getColumns().toString() + "\n" + t.getPrimaryKey().toSQLString());
+	}
+	
+	public SQLTable create(String s) throws JSQLParserException {
+		CreateTable createTable = (CreateTable) parserManager.parse(new StringReader(s));
+		SQLTable table = new SQLTable();
+		List<SQLColumn> column = new ArrayList<SQLColumn>();
+		table.setName(createTable.getTable().getName());
+		
+		
+		
+		for(int i=0; i < createTable.getColumnDefinitions().size(); i++) {
+			SQLColumn sqlColumn = new SQLColumn();
+			sqlColumn.setName(createTable.getColumnDefinitions().get(i).getColumnName());
+			sqlColumn.setType(createTable.getColumnDefinitions().get(i).getColDataType().getDataType());
+			sqlColumn.setProperties(createTable.getColumnDefinitions().get(i).getColumnSpecStrings().toString());
+			column.add(sqlColumn);
+		}
+		
+		table.setColumns(column);
+		return table;
+	}
+}

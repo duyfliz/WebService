@@ -1,0 +1,38 @@
+package org.vgu.sql;
+
+public class SQLCreateFunction {
+	private String name;
+	private String[] parameters;
+	private String body;
+	private String returnType;
+	
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getParameters() {
+		return parameters;
+	}
+	public void setParameters(String[] parameters) {
+		this.parameters = parameters;
+	}
+	public String getBody() {
+		return body;
+	}
+	public void setBody(String body) {
+		this.body = body;
+	}
+	public String getReturnType() {
+		return returnType;
+	}
+	public void setReturnType(String returnType) {
+		this.returnType = returnType;
+	}
+	public void setParameters(String string) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+}

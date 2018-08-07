@@ -1,0 +1,178 @@
+package org.vgu.sql;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.vgu.uml.UMLAssociation;
+import org.vgu.uml.UMLAttribute;
+import org.vgu.uml.UMLClass;
+import org.vgu.uml.UMLContext;
+import org.vgu.uml.UMLContextExample;
+public class SQLVisitor implements Visitor {
+	
+	private SQLTable surrogateTable = null;
+	private SQLTable tempTable = null;
+	private SQLTable sqlTable;
+	
+	public SQLTable getSqlTable() {
+		return sqlTable;
+	}
+
+	public void setSqlTable(SQLTable sqlTable) {
+		this.sqlTable = sqlTable;
+	}
+
+	@Override
+	public String visit(SQLCreate sqlCreate) {
+		sqlTable = this.createSQLTable(sqlCreate.getUMLContext());
+		String str = "";
+		String s = "";
+		for(SQLColumn c:sqlTable.getColumns()) {
+			str+= c.getName() + " " + c.getType() + " " + c.getProperties() + ",\n";
+		}
+		for(SQLForeignKey f:sqlTable.getForeignKeys()) {
+			str += f.getName()+"\n";
+		}
+		s = "CREATE TABLE " + sqlTable.getName() + "(\n" + str + "\n);";
+		if(surrogateTable==null) {
+			return s;
+		}
+		tempTable = surrogateTable;
+		surrogateTable = null;
+		return s;
+	}
+
+	@Override
+	public String visit(SQLSelect sqlSelect) {
+		// TODO Auto-generated method stub
+		String select;
+		String str = "";
+		str += "SELECT * FROM " + sqlSelect.getUMLContext().getClasses().getName() + addComma();
+		for(UMLAttribute u:sqlSelect.getUMLContext().getAttributes()) {
+			SQLColumn sqlColumn = new SQLColumn();
+			sqlColumn.setName(u.getName());
+			str += "SELECT " + sqlColumn.getName().toString() + " FROM "
+					+ sqlSelect.getUMLContext().getClasses().getName();
+		}
+//		for (int i = 0; i < sqlSelect.getUMLContext().getClasseslist().size() ; i++)
+//		{
+//			if (!sqlSelect.getUMLContext().getClasses().getName().equals(sqlSelect.getUMLContext().getClasseslist().get(i).getName())){
+//				str += "INNER JOIN " + sqlSelect.getUMLContext().getClasseslist().get(i).getName() + addSemiColon(); 
+//			}
+//		}
+//		System.out.println(sqlSelect.getUMLContext().getClasseslist().get(0).getName());
+		select = str;
+		return select;
+	}
+	
+	
+	private static String addComma() {
+		return ",\n";
+	}
+	
+	private static String addSemiColon() {
+		return ";\n";
+	}
+	
+	private List<SQLForeignKey> createForeignKey(UMLContext umlContext) {
+		List<SQLForeignKey> sqlForeignKeys = new ArrayList<SQLForeignKey>();
+		for(UMLAssociation a:umlContext.getAssociations()) {
+			SQLForeignKey tempt = new SQLForeignKey();
+			if (umlContext.areBothEndsMulti(a)) {
+				if(!a.isCheck()) {
+					surrogateTable = new SQLTable();
+					String u = a.getSource().getTarget().getName();
+					String v = a.getSource().getSource().getName();
+					SQLForeignKey c1 = new SQLForeignKey();
+					SQLForeignKey c2 = new SQLForeignKey();
+					c1.setName(u+"ID");
+					c1.setType("INT");
+					c1.setProperties("UNIQE NOT NULL");
+					c2.setName(v+"ID");
+					c2.setType("INT");
+					c2.setProperties("UNIQUE NOT NULL");
+					c1.setReferences(u);
+					c2.setReferences(v);
+					List<SQLForeignKey> col = new ArrayList<SQLForeignKey>();
+					col.add(c1);
+					col.add(c2);
+					
+					surrogateTable.setName(u+"_"+v);
+					surrogateTable.setForeignKeys(col);
+				}
+				a.setCheck(true);
+			}
+			else if(umlContext.areBothEndsMixed(a)) {
+				if(umlContext.isMulti(a.getTarget())) {
+					if(a.getTarget().getTarget().equals(umlContext.getClasses())) {
+						tempt.setName(a.getTarget().getSource().getName() + "ID");
+						tempt.setProperties("NOT NULL");
+						tempt.setReferences(a.getTarget().getSource().getName());
+						sqlForeignKeys.add(tempt);
+					}
+				}
+				else if(umlContext.isMulti(a.getSource())) {
+					
+					if(a.getSource().getTarget().equals(umlContext.getClasses())) {
+						tempt.setName(a.getSource().getSource().getName() + "ID");
+						tempt.setProperties("NOT NULL");
+						tempt.setReferences(a.getSource().getSource().getName());
+						sqlForeignKeys.add(tempt);
+					}
+				}
+			}  else if(umlContext.areBothEndsAtMostOne(a)) {
+				if(a.getSource().getTarget().equals(umlContext.getClasses())) {
+					String s = a.getSource().getSource().getName()+ "ID";
+					tempt.setName(s);
+					tempt.setProperties("UNIQUE");
+					tempt.setReferences(s);
+					sqlForeignKeys.add(tempt);
+				}
+			}
+		}
+		return sqlForeignKeys;
+	}
+
+	
+	
+	public SQLTable createSQLTable(UMLContext umlContext) {
+		sqlTable = new SQLTable();
+		SQLColumn primaryKey = new SQLColumn();
+		List<SQLColumn> sqlColumn = new ArrayList<SQLColumn>();
+		List<SQLForeignKey> sqlForeignKeys = new ArrayList<SQLForeignKey>();
+		
+		sqlTable.setName(umlContext.getClasses().getName());
+		primaryKey.setName(umlContext.getClasses().getName()+"ID");
+		primaryKey.setType("INT");
+		primaryKey.setProperties("NOT NULL AUTO INCREMENT");
+		sqlColumn.add(primaryKey);
+		sqlTable.setPrimaryKey(primaryKey);
+		
+		for(UMLAttribute u:umlContext.getAttributes()) {
+			SQLColumn col = new SQLColumn();
+			col.setName(u.getName());
+			col.setType(u.getType());
+			col.setProperties("NOT NULL");
+			sqlColumn.add(col);
+		}
+		sqlForeignKeys = this.createForeignKey(umlContext);
+		for(SQLColumn s:sqlForeignKeys) {
+				sqlColumn.add(s);
+		}
+		sqlTable.setColumns(sqlColumn);
+		sqlTable.setForeignKeys(sqlForeignKeys);
+		return sqlTable;
+	}
+
+	public SQLTable getSurrogateTable() {
+		return surrogateTable;
+	}
+
+	public void setSurrogateTable(SQLTable surrogateTable) {
+		this.surrogateTable = surrogateTable;
+	}
+	
+	
+	
+
+}

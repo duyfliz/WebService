@@ -1,0 +1,27 @@
+package org.vgu.parse;
+
+import java.util.List;
+
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.Statements;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.util.TablesNamesFinder;
+
+public class SQLParseTest {
+	
+	public static void main(String[] args) throws JSQLParserException {
+		Statements statement = CCJSqlParserUtil.parseStatements("SELECT * FROM tab1; SELECT * FROM user");
+		Statement s = CCJSqlParserUtil.parse("SELECT * FROM user");
+		Expression expression = CCJSqlParserUtil.parseExpression("a*(5+mycolumn)");
+		Select selectStatement = (Select) statement;
+		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+		List<String> tableList = tablesNamesFinder.getTableList(selectStatement);
+		for(String a:tableList) {
+			System.out.println(s);
+		}
+	}
+}

@@ -1,0 +1,11 @@
+package org.vgu.sql;
+
+public class SQLSelect implements SQLStatements {
+
+	@Override
+	public void accept() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

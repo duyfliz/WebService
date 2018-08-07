@@ -1,0 +1,5 @@
+package org.vgu.sql;
+
+public interface Visitor {
+
+}

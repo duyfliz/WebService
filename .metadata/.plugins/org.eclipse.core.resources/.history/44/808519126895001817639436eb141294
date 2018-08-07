@@ -1,0 +1,302 @@
+package org.vgu.parse;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import org.vgu.sql.SQLColumn;
+import org.vgu.sql.SQLForeignKey;
+import org.vgu.sql.SQLTable;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Alias;
+import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.ExpressionVisitor;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.expression.operators.relational.ComparisonOperator;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.parser.SimpleNode;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.create.table.ForeignKeyIndex;
+import net.sf.jsqlparser.statement.create.table.Index;
+import net.sf.jsqlparser.statement.create.table.NamedConstraint;
+import net.sf.jsqlparser.statement.select.Distinct;
+import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+import net.sf.jsqlparser.statement.select.SelectItem;
+import net.sf.jsqlparser.util.TablesNamesFinder;
+
+public class SQLParseTest {
+	
+	CCJSqlParserManager parserManager = new CCJSqlParserManager();
+	
+	public static void main(String[] args) throws Exception {
+		
+		SQLParseTest p = new SQLParseTest();
+		SQLTable t = new SQLTable();
+		t = p.create("CREATE TABLE user (userID int not null, age int not null, PRIMARY KEY (userID),"
+				+ "companyID int not null, FOREIGN KEY (companyID) REFERENCES company(companyID));");
+		String s = "";
+		for(int i=0; i<t.getColumns().size(); i++) {
+			s += t.getColumns().get(i).toSQLString() + " ";
+		}
+		String foreign = "";
+		for(int i=0; i<t.getForeignKeys().size(); i++) {
+			foreign += t.getForeignKeys().get(i).getName() + " " + t.getForeignKeys().get(i).getProperties() + "\n";
+		}
+
+		String statement = "SELECT s.studentname\r\n" + 
+				"    , s.studentid\r\n" + 
+				"    , s.studentdesc\r\n" + 
+				"    , h.hallname\r\n" + 
+				"FROM students s\r\n" + 
+				"INNER JOIN hallprefs hp\r\n" + 
+				"    on s.studentid = hp.studentid\r\n" + 
+				"INNER JOIN halls h\r\n" + 
+				"    on hp.hallid = h.hallid";
+		p.select(statement);
+//		p.testGetTableList();
+		p.testSQL();
+		p.test2();
+	}
+	
+	public SQLTable create(String s) throws JSQLParserException {
+		CreateTable createTable = (CreateTable) parserManager.parse(new StringReader(s));
+		SQLTable table = new SQLTable();
+		List<SQLColumn> column = new ArrayList<SQLColumn>();
+		List<SQLForeignKey> listForeign = new ArrayList<SQLForeignKey>();
+		SQLColumn primaryKey = null;
+		table.setName(createTable.getTable().getName());
+		
+		
+		
+		for(int i=0; i < createTable.getColumnDefinitions().size(); i++) {
+			String temp = "";
+			SQLColumn sqlColumn = new SQLColumn();
+			sqlColumn.setName(createTable.getColumnDefinitions().get(i).getColumnName());
+			sqlColumn.setType(createTable.getColumnDefinitions().get(i).getColDataType().getDataType());
+			if(createTable.getColumnDefinitions().get(i).getColumnSpecStrings().isEmpty()) {
+				System.out.println("empty");
+			} else {
+				for(int j=0; j<createTable.getColumnDefinitions().get(i).getColumnSpecStrings().size(); j++) {
+					temp += (createTable.getColumnDefinitions().get(i).getColumnSpecStrings().get(j)) +" ";
+				}
+				sqlColumn.setProperties(temp);
+			}
+			sqlColumn.setProperties(temp);
+			column.add(sqlColumn);
+		}
+		
+		for(int i=0; i<createTable.getIndexes().size(); i++) {
+			if(createTable.getIndexes().get(i).getClass().getName().equals("net.sf.jsqlparser.statement.create.table.ForeignKeyIndex")) {
+				ForeignKeyIndex f = (ForeignKeyIndex) createTable.getIndexes().get(i);
+				SQLForeignKey foreign = new SQLForeignKey();
+				for(int j=0; j<f.getColumnsNames().size(); j++) {
+					foreign.setName(f.getColumnsNames().get(j));
+					foreign.setReferences(f.getReferencedColumnNames().get(j));
+				}
+				foreign.setRefTable(f.getTable().getName());
+				foreign.setProperties(f.getType());
+				listForeign.add(foreign);
+			}
+			else if(createTable.getIndexes().get(i).getClass()
+					.getName().equals("net.sf.jsqlparser.statement.create.table.NamedConstraint")) {
+				primaryKey = new SQLColumn();
+				Index index = createTable.getIndexes().get(i);
+				for(int j=0; j<index.getColumnsNames().size(); j++) {
+					primaryKey.setName(index.getColumnsNames().get(j));
+					primaryKey.setProperties(index.getType());
+				}
+			}
+			
+		}
+		table.setPrimaryKey(primaryKey);
+		table.setForeignKeys(listForeign);
+		table.setColumns(column);
+		return table;
+	}
+	
+	public void select(String s) throws JSQLParserException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+		Select select = (Select) parserManager.parse(new StringReader(s));
+		PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+		Distinct d = plainSelect.getDistinct();
+//		MinorThan minor = (MinorThan) plainSelect.getWhere();
+//		System.out.println(minor.getLeftExpression() + minor.getStringExpression() + minor.getRightExpression());
+		
+		Expression where = plainSelect.getWhere();
+//		BinaryExpression bi = (BinaryExpression) where;
+//		System.out.println(bi.getStringExpression());
+		if(where instanceof ComparisonOperator) {
+			System.out.println(((ComparisonOperator) where).getLeftExpression() + " "
+					+ ((ComparisonOperator) where).getRightExpression());
+		} else if (where instanceof AndExpression) {
+			List<Expression> list = new ArrayList<Expression>();
+			while(((BinaryExpression) where).getRightExpression()!=null) {
+				if(((BinaryExpression) where).getStringExpression() != "AND") {
+					list.add(where);
+				} else {
+					list.add(((BinaryExpression) where).getRightExpression());
+				}
+				
+				where = ((BinaryExpression) where).getLeftExpression();
+			
+				if (!(where instanceof BinaryExpression)) {
+					break;
+				}
+			}
+			Collections.reverse(list);
+			for(Expression e:list) {
+				System.out.println(e.toString());
+			}
+		} else if (where instanceof OrExpression) {
+			System.out.println("OR Expression");
+		} else System.out.println("AAA");
+		
+//		System.out.println(plainSelect.getWhere().getClass().getName());
+		List<SelectItem> selectItems = plainSelect.getSelectItems();
+		
+		for(SelectItem item:selectItems) {
+			if(item.toString().equals("*")) {
+				System.out.println("*");
+			} else {
+				SelectExpressionItem sEI = (SelectExpressionItem) item;
+				Expression ex = sEI.getExpression();
+//				if(ex instanceof Column) {
+//					Column col = (Column) ex;
+//					System.out.println(col.getColumnName() + " : " + col.getFullyQualifiedName());
+//				}
+				if(ex instanceof Function) {
+					
+				} else {
+					System.out.println(ex.toString());
+				}
+			}
+		}
+	}
+	
+	public void testGetTableList() throws Exception {
+		
+		String sql ="SELECT * FROM MY_TABLE1, MY_TABLE2, (SELECT * FROM MY_TABLE3) LEFT OUTER JOIN MY_TABLE4 "
+				+ " WHERE ID = (SELECT MAX(ID) FROM MY_TABLE5) AND ID2 IN (SELECT * FROM MY_TABLE6)";
+		net.sf.jsqlparser.statement.Statement statement = parserManager.parse(new StringReader(sql));
+		 
+		//now you should use a class that implements StatementVisitor to decide what to do
+		//based on the kind of the statement, that is SELECT or INSERT etc. but here we are only
+		//interested in SELECTS
+		
+		if (statement instanceof Select) {
+			Select selectStatement = (Select) statement;
+			TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+			List tableList = tablesNamesFinder.getTableList(selectStatement);
+			int i = 1;
+			for (Iterator iter = tableList.iterator(); iter.hasNext(); i++) {
+				String tableName = (String) iter.next();
+				System.out.println(tableName);
+			}
+		}
+	}
+	
+	public void testSQL() throws JSQLParserException {
+		
+/*		// SELECT name FROM Student
+        Table student = new Table();
+        student.setSchemaName("programDB");
+        student.setName("Student");
+        
+        //AllColumns all = new AllColumns();
+        SelectExpressionItem item = new SelectExpressionItem();
+        Column student_id = new Column();
+        student_id.setTable(student);
+        //class_name.concat("");
+        student_id.setColumnName("name");
+        item.setExpression(student_id);
+        
+        PlainSelect stat1z = new PlainSelect();
+        stat1z.setFromItem(student);
+        stat1z.addSelectItems(item);
+        
+        System.out.println(stat1z);*/
+		
+		
+		Select select = (Select) parserManager.parse(new StringReader("SELECT u.name, v.plate "
+				+ "FROM user AS u INNER JOIN vehicle AS v ON u.userID = v.userID"));
+		PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+		Table user = new Table();
+		Table vehicle = new Table();
+		user.setName("user");
+		vehicle.setName("vehicle");
+		Alias u = new Alias("u");
+		u.setUseAs(true);
+		Alias v = new Alias("v");
+		v.setUseAs(true);
+		user.setAlias(u);
+		vehicle.setAlias(v);
+		
+		Column name = new Column();
+		name.setColumnName("name");
+		name.setTable(user);
+		
+		Column plate = new Column();
+		plate.setColumnName("plate");
+		plate.setTable(vehicle);
+		
+		Column userID = new Column();
+		userID.setColumnName("userID");
+		userID.setTable(user);
+		
+		Column userID2 = new Column();
+		userID2.setColumnName("userID");
+		userID2.setTable(vehicle);
+		
+		SelectExpressionItem item = new SelectExpressionItem();
+		item.setExpression(name);
+		SelectExpressionItem item2 = new SelectExpressionItem();
+		item2.setExpression(plate);
+		
+		ArrayList<SelectItem> items = new ArrayList<SelectItem>();
+		items.add(item);
+		items.add(item2);
+		PlainSelect test = new PlainSelect();
+		test.setFromItem(user);
+		
+		Join joins = new Join();
+		joins.setInner(true);
+		joins.setRightItem(vehicle);
+		
+		
+		EqualsTo equal = new EqualsTo();
+		equal.setLeftExpression(userID);
+		equal.setRightExpression(userID2);
+		
+		joins.setOnExpression(equal);
+		List<Join> joinSet = new ArrayList<Join>();
+		joinSet.add(joins);
+		test.setJoins(joinSet);
+		test.setSelectItems(items);;
+		System.out.println(plainSelect);
+		System.out.println(test);
+	}
+	
+	public void test2() throws JSQLParserException {
+		String s = "SELECT X1, (CASE WHEN T.ID IS NULL THEN CASE P.WEIGHT\r\n" + 
+				"WHEN 0 THEN NULL ELSE P.WEIGHT END\r\n" + 
+				"ELSE SUM(T.QTY) END) as W\r\n" + 
+				"FROM A\r\n" + 
+				"LEFT JOIN T ON T.ID = ?\r\n" + 
+				"RIGHT JOIN P ON P.ID = ?";
+		Select select = (Select) parserManager.parse(new StringReader(s));
+		PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+	}
+	
+}
